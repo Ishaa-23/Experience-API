@@ -152,42 +152,29 @@ namespace ExperienceAPI.Controllers
                 }
            
         }
-        [HttpPut("soft-delete"), Authorize]
+        [HttpDelete("soft-delete"), Authorize]
         public async Task<ActionResult<List<Employee1>>> SoftDelete(int id)
         {
             string url = configuration.GetSection("AppSettings").GetSection("url").Value;
             using (var client = new HttpClient())
             {
                 client.BaseAddress = new Uri(url);
-                using (HttpResponseMessage response = await client.GetAsync("api/Employee"))
-                {
-                    string responseContent = response.Content.ReadAsStringAsync().Result;
-                    response.EnsureSuccessStatusCode();
-                    List<Employee1> results = JsonConvert.DeserializeObject<List<Employee1>>(responseContent);
-                    Employee1 temp = new Employee1();
-                    temp= results.FirstOrDefault(x => x.Id == id);
-                    var postData = new
-                    {
-                        Id = id,
-                        Name = temp.Name,
-                        Age = temp.Age,
-                        Role = temp.Role,
-                        isDeleted = temp.isDeleted,
-                        isActive = false,
-                        isPermission = temp.isPermission
+                using (HttpResponseMessage response = await client.DeleteAsync("api/Employee/soft-delete?id=" + id))
 
-                    };
-                    var content = new StringContent(JsonConvert.SerializeObject(postData), Encoding.UTF8, "application/json");
-                    using (HttpResponseMessage res = await client.PutAsync("api/Employee/update", content))
+                {
+                    var responseContent = response.Content.ReadAsStringAsync().Result;
+                    response.EnsureSuccessStatusCode();
+                    if (response.IsSuccessStatusCode)
                     {
-                        var rc = res.Content.ReadAsStringAsync().Result;
-                        res.EnsureSuccessStatusCode();
-                        List<Employee1> list = JsonConvert.DeserializeObject<List<Employee1>>(rc);
-                        Log.Information("Soft delete results => {@list}", list);
-                        return list;
+                        Log.Information("Soft-Deleted results of Id => {@id}", id);
+                        return Ok("Deleted");
+
+                    }
+                    else
+                    {
+                        return BadRequest("Delete failed.");
                     }
                 }
-
             }
         }
 
