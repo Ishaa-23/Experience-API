@@ -87,7 +87,7 @@ namespace ExperienceAPI.Controllers
 
         }
         [HttpPost,Authorize]
-        public async Task<ActionResult<List<Employee1>>> Add(Employee1 emp)
+        public async Task<ActionResult> Add(Employee1 emp)
         {
 
                 string url = configuration.GetSection("AppSettings").GetSection("url").Value;
@@ -115,7 +115,7 @@ namespace ExperienceAPI.Controllers
                         response.EnsureSuccessStatusCode();
                         List<Employee1> results = JsonConvert.DeserializeObject<List<Employee1>>(responseContent);
                         Log.Information("Post results => {@result}", results);
-                        return results;
+                        return Ok("Added");
 
                     }
                 }
@@ -173,6 +173,31 @@ namespace ExperienceAPI.Controllers
                     else
                     {
                         return BadRequest("Delete failed.");
+                    }
+                }
+            }
+        }
+        [HttpDelete("permission"), Authorize]
+        public async Task<ActionResult<List<Employee1>>> Permission(int id)
+        {
+            string url = configuration.GetSection("AppSettings").GetSection("url").Value;
+            using (var client = new HttpClient())
+            {
+                client.BaseAddress = new Uri(url);
+                using (HttpResponseMessage response = await client.DeleteAsync("api/Employee/permission?id=" + id))
+
+                {
+                    var responseContent = response.Content.ReadAsStringAsync().Result;
+                    response.EnsureSuccessStatusCode();
+                    if (response.IsSuccessStatusCode)
+                    {
+                        Log.Information("Changed permission of {@id}", id);
+                        return Ok("Permission changed");
+
+                    }
+                    else
+                    {
+                        return BadRequest("Failed operation.");
                     }
                 }
             }
