@@ -1,0 +1,1 @@
+2023-10-11 00:07:34.859 -07:00 [INF] Get results => [{"Id":2,"Name":"ishaa","Age":22,"$type":"Employee1"}]

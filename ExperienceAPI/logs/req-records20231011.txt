@@ -1,0 +1,10 @@
+2023-10-11 00:09:32.505 -07:00 [INF] Post results => [{"Id":2,"Name":"ishaa","Age":22,"$type":"Employee1"},{"Id":3,"Name":"rehaan","Age":15,"$type":"Employee1"}]
+2023-10-11 00:09:57.940 -07:00 [INF] Get results => [{"Id":2,"Name":"ishaa","Age":22,"$type":"Employee1"},{"Id":3,"Name":"rehaan","Age":15,"$type":"Employee1"}]
+2023-10-11 00:14:42.820 -07:00 [INF] Get results => [{"Id":3,"Name":"rehaan","Age":15,"$type":"Employee1"}]
+2023-10-11 00:15:26.232 -07:00 [INF] Post results => [{"Id":4,"Name":"test","Age":0,"$type":"Employee1"}]
+2023-10-11 00:15:52.978 -07:00 [INF] Get results => [{"Id":4,"Name":"test","Age":0,"$type":"Employee1"}]
+2023-10-11 00:16:06.013 -07:00 [INF] Deleted results of Id => 4
+2023-10-11 00:17:05.533 -07:00 [INF] Post results => [{"Id":5,"Name":"abc","Age":0,"$type":"Employee1"}]
+2023-10-11 00:17:19.086 -07:00 [INF] Put results => [{"Id":5,"Name":"string","Age":0,"$type":"Employee1"}]
+2023-10-11 23:32:41.452 -07:00 [INF] Get results => [{"Id":5,"Name":"string","Age":0,"$type":"Employee1"}]
+2023-10-11 23:36:28.279 -07:00 [INF] Get results => [{"Id":5,"Name":"string","Age":0,"$type":"Employee1"}]

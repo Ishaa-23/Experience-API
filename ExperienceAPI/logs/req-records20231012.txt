@@ -1,0 +1,11 @@
+2023-10-12 00:52:21.045 -07:00 [INF] Get results => [{"Id":5,"Name":"string","Age":0,"$type":"Employee1"}]
+2023-10-12 01:02:41.651 -07:00 [INF] Get results => [{"Id":5,"Name":"string","Age":0,"$type":"Employee1"}]
+2023-10-12 03:11:23.841 -07:00 [INF] Get results => [{"Id":1,"Name":"ishaa","Age":22,"Role":"employee","isDeleted":false,"isActive":false,"$type":"Employee1"}]
+2023-10-12 03:12:13.474 -07:00 [INF] Post results => [{"Id":1,"Name":"ishaa","Age":22,"Role":"employee","isDeleted":false,"isActive":false,"$type":"Employee1"},{"Id":2,"Name":"rehaan","Age":15,"Role":"Employee","isDeleted":false,"isActive":false,"$type":"Employee1"}]
+2023-10-12 04:37:06.857 -07:00 [INF] Get results => [{"Id":1,"Name":"ishaa","Age":22,"Role":"employee","isDeleted":false,"isActive":false,"$type":"Employee1"},{"Id":2,"Name":"rehaan","Age":15,"Role":"Employee","isDeleted":false,"isActive":false,"$type":"Employee1"}]
+2023-10-12 04:37:13.728 -07:00 [INF] Deleted results of Id => 1
+2023-10-12 20:56:26.754 -07:00 [INF] Get results => [{"Id":2,"Name":"rehaan","Age":15,"Role":"Employee","isDeleted":false,"isActive":false,"$type":"Employee1"}]
+2023-10-12 20:57:02.983 -07:00 [INF] Post results => [{"Id":2,"Name":"rehaan","Age":15,"Role":"Employee","isDeleted":false,"isActive":false,"$type":"Employee1"},{"Id":3,"Name":"mukundan","Age":22,"Role":"Employee","isDeleted":false,"isActive":false,"$type":"Employee1"}]
+2023-10-12 20:58:12.054 -07:00 [INF] Put results => [{"Id":2,"Name":"abc","Age":22,"Role":"Manager","isDeleted":false,"isActive":false,"$type":"Employee1"},{"Id":3,"Name":"mukundan","Age":22,"Role":"Employee","isDeleted":false,"isActive":false,"$type":"Employee1"}]
+2023-10-12 20:58:19.536 -07:00 [INF] Deleted results of Id => 2
+2023-10-12 23:29:38.558 -07:00 [INF] Get results => [{"Id":3,"Name":"mukundan","Age":22,"Role":"Employee","isDeleted":false,"isActive":false,"$type":"Employee1"}]
