@@ -20,7 +20,7 @@ namespace ExperienceAPI.Controllers
             _logger = logger;
         }
 
-        [HttpGet(Name = "GetWeatherForecast"), Authorize(Roles ="Admin")]
+        [HttpGet(Name = "GetWeatherForecast"), Authorize(Roles ="Employee")]
         public IEnumerable<WeatherForecast> Get()
         {
            

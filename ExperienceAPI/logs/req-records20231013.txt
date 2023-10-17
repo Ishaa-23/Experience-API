@@ -25,3 +25,6 @@
 2023-10-13 04:15:19.227 -07:00 [INF] Get results => [{"Id":1,"Name":"string","Age":0,"Role":"string","isDeleted":false,"isActive":true,"isPermission":true,"$type":"Employee1"}]
 2023-10-13 04:15:31.276 -07:00 [INF] Soft-Deleted results of Id => 1
 2023-10-13 04:15:37.056 -07:00 [INF] Get results => [{"Id":1,"Name":"string","Age":0,"Role":"string","isDeleted":false,"isActive":false,"isPermission":true,"$type":"Employee1"}]
+2023-10-13 04:37:59.623 -07:00 [INF] Post results => [{"Id":1,"Name":"string","Age":0,"Role":"string","isDeleted":false,"isActive":false,"isPermission":false,"$type":"Employee1"},{"Id":2,"Name":"string","Age":0,"Role":"string","isDeleted":false,"isActive":false,"isPermission":false,"$type":"Employee1"}]
+2023-10-13 04:38:16.202 -07:00 [INF] Get results => [{"Id":1,"Name":"string","Age":0,"Role":"string","isDeleted":false,"isActive":false,"isPermission":false,"$type":"Employee1"},{"Id":2,"Name":"string","Age":0,"Role":"string","isDeleted":false,"isActive":true,"isPermission":true,"$type":"Employee1"}]
+2023-10-13 04:39:35.984 -07:00 [INF] Changed permission of 2
