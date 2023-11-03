@@ -7,16 +7,21 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using RestSharp;
 using Serilog;
 using System;
+using System.Data;
 using System.Drawing;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Reflection.Metadata;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace ExperienceAPI.Controllers
 {
@@ -31,368 +36,283 @@ namespace ExperienceAPI.Controllers
         }
 
         public static User user = new User();
-        [HttpPost("register")]
-        public ActionResult<User> Register(UserDto request,string role)
-        {
-            string passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
-            user.Username = request.UserName;
-            user.PasswordHash = passwordHash;
-            user.Role = role;
-            return Ok(user);
-        }
-        [HttpPost("login")]
-        public ActionResult<User> Login(UserDto request)
-        {
-            if (user.Username != request.UserName)
-            {
-                return BadRequest("User not found");
-            }
-            if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
-            {
-                return BadRequest("Wrong password");
-            }
-
-            string token = CreateToken(user);
-            return Ok(token);
-        }
-
-
-
-        [HttpGet, Authorize]
-        public async Task<ActionResult<List<Employee1>>> GetAll()
+        public string TokenToUse;
+        
+        [HttpGet("Login")]
+        public async Task<ActionResult> GetToken(string Username, string Password)
         {
             string url = configuration.GetSection("AppSettings").GetSection("url").Value;
+            string requestUri = $"{url}/api/Employee/login";
+            string username = Username;
+            string password = Password;
+
             using (var client = new HttpClient())
             {
 
-                client.BaseAddress = new Uri(url);
-                using (HttpResponseMessage response = await client.GetAsync("api/Employee"))
+                UriBuilder uriBuilder = new UriBuilder(requestUri);
+                uriBuilder.Query = $"Username={username}&Password={password}";
+                HttpResponseMessage response = await client.GetAsync(uriBuilder.Uri);
+
+                if (response.IsSuccessStatusCode)
                 {
-                    string responseContent = response.Content.ReadAsStringAsync().Result;
-                    response.EnsureSuccessStatusCode();
-                    List<Employee1> results = JsonConvert.DeserializeObject<List<Employee1>>(responseContent);
-                    if (results.ToList().Count > 0)
+                    
+                    string token = await response.Content.ReadAsStringAsync();
+                    try
                     {
-                        Log.Information("Get results => {@result}", results);
-                        return results.Where(x => x.isPermission == true).ToList();  //only allowing operation on permission=yes
+                        var tokenHandler = new JwtSecurityTokenHandler();
+                        var jwtToken = tokenHandler.ReadToken(token) as JwtSecurityToken;
+
+                        if (jwtToken == null)
+                        {
+                            // Token cannot be read
+                            return Ok("Token cannot be read.");
+                        }
+
+                        var now = DateTime.UtcNow;
+                        if (jwtToken.ValidTo < now)
+                        {
+                            // Token has expired
+                            return BadRequest("Token has expired.");
+                        }
+
+                        // Token is still valid
+                        TokenToUse = token;
+                        Response.Cookies.Append("JWTToken", TokenToUse, new CookieOptions
+                        {
+                            Expires = DateTimeOffset.Now.AddHours(1),
+                            Path = "/",
+                        }); ;
+                        return Ok(TokenToUse);
                     }
-                    else
+                    catch (HttpRequestException e)
                     {
-                        return BadRequest("Empty List");
+                        return BadRequest(e.Message);
                     }
-
-                }
-
-            }
-        }
-        [HttpPost, Authorize(Roles = "Supervisor,Manager")]
-        public async Task<ActionResult> Add(Employee1 emp)
-        {
-
-                string url = configuration.GetSection("AppSettings").GetSection("url").Value;
-                using (var client = new HttpClient())
-                {
-                    client.BaseAddress = new Uri(url);
-                
-                    var postData = new
-                    {
-                        Name = emp.Name,
-                        Age = emp.Age,
-                        Role= emp.Role,
-                        isDeleted= emp.isDeleted,
-                        isActive= emp.isActive,
-                        isPermission= emp.isPermission
-
-
-                    };
-                    var content = new StringContent(JsonConvert.SerializeObject(postData), Encoding.UTF8, "application/json");
-
-
-                    using (HttpResponseMessage response = await client.PostAsync("api/Employee/Add", content))
-                    {
-                        var responseContent = response.Content.ReadAsStringAsync().Result;
-                        response.EnsureSuccessStatusCode();
-                        List<Employee1> results = JsonConvert.DeserializeObject<List<Employee1>>(responseContent);
-                        Log.Information("Post results => {@result}", results);
-                        return Ok("Added");
-
-                    }
-                }
-            
-        }
-        [HttpPut("Update"), Authorize(Roles ="Supervisor,Manager")]
-        public async Task<ActionResult> Update(Employee1 newEmp)
-        {
-
-            string url = configuration.GetSection("AppSettings").GetSection("url").Value;
-            using (var client = new HttpClient())
-            {
-                client.BaseAddress = new Uri(url);
-                HttpResponseMessage res = await client.GetAsync("api/Employee");
-                string responseContent = res.Content.ReadAsStringAsync().Result;
-                List<Employee1> results = JsonConvert.DeserializeObject<List<Employee1>>(responseContent);
-                var emp = results.FirstOrDefault(x => x.Id == newEmp.Id);
-                if(emp==null)
-                {
-                    return NotFound("No employee of this id exists.");
                 }
                 else
                 {
-                    if (emp.isPermission == false)
-                    {
-                        return BadRequest("No operation is allowed.");
-                    }
-                    else
-                    {
-                        var postData = new
-                        {
-                            Id = newEmp.Id,
-                            Name = newEmp.Name,
-                            Age = newEmp.Age,
-                            Role = newEmp.Role,
-                            isDeleted = newEmp.isDeleted,
-                            isActive = newEmp.isActive,
-                            isPermission = newEmp.isPermission
-
-                        };
-                        var content = new StringContent(JsonConvert.SerializeObject(postData), Encoding.UTF8, "application/json");
-                        using (HttpResponseMessage response = await client.PutAsync("api/Employee/update", content))
-                        {
-                            var rc = response.Content.ReadAsStringAsync().Result;
-                            response.EnsureSuccessStatusCode();
-                            List<Employee1> list = JsonConvert.DeserializeObject<List<Employee1>>(rc);
-                            Log.Information("Put results => {@result}", list);
-                            return Ok("Updated successfully at: " + DateTime.Now);
-                        }
-                    }
+                    return BadRequest();
                 }
-                
-
             }
-
         }
-        [HttpPut("Soft-delete"), Authorize(Roles = "Supervisor,Manager")]
-        public async Task<ActionResult> SoftDelete(int id)
+     
+        [HttpGet("Display-Info")]
+        public async Task<ActionResult<List<Employee1>>> DisplayInfo(UserRoles role, string name)
         {
             string url = configuration.GetSection("AppSettings").GetSection("url").Value;
-
             using (HttpClient httpClient = new HttpClient())
             {
-                httpClient.BaseAddress = new Uri(url);
-                HttpResponseMessage res = await httpClient.GetAsync("api/Employee");
-                string responseContent = res.Content.ReadAsStringAsync().Result;
-                List<Employee1> results = JsonConvert.DeserializeObject<List<Employee1>>(responseContent);
-                var newEmp = results.FirstOrDefault(x => x.Id == id);
-                if(newEmp==null)
+                try
                 {
-                    return NotFound("No employee of this id exists.");
-                }
-                else
-                {
-                    if (newEmp.isPermission == false)
+                    string userRole;
+                    if ((int)role == 1) { userRole = "Supervisor"; }
+                    else if ((int)role == 2) { userRole = "Manager"; }
+                    else { userRole = "Employee"; }
+
+                    var t = Request.Cookies["JWTToken"];
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", t);
+                    string requestUri = $"{url}/api/Employee/Display-Info?role={userRole}&name={name}";
+                    HttpResponseMessage response = await httpClient.GetAsync(requestUri);
+                    if (response.IsSuccessStatusCode)
                     {
-                        return BadRequest("No operation allowed.");
+                        string responseContent = response.Content.ReadAsStringAsync().Result;
+                        if (userRole == "Employee")
+                        {
+                            Employee1 emp = JsonConvert.DeserializeObject<Employee1>(responseContent);
+                            return Ok(emp);
+                        }
+                        List<Employee1> results = JsonConvert.DeserializeObject<List<Employee1>>(responseContent);
+                        return Ok(results);
                     }
                     else
                     {
-                        var postData = new
-                        {
-                            Id = newEmp.Id,
-                            Name = newEmp.Name,
-                            Age = newEmp.Age,
-                            Role = newEmp.Role,
-                            isDeleted = newEmp.isDeleted,
-                            isActive = false,
-                            isPermission = newEmp.isPermission
-
-                        };
-                        var content = new StringContent(JsonConvert.SerializeObject(postData), Encoding.UTF8, "application/json");
-                        HttpResponseMessage response = await httpClient.PutAsync($"api/Employee/update", content);
-                        if (response.IsSuccessStatusCode)
-                        {
-                            return Ok("Soft-deleted at: " + DateTime.Now);
-                        }
-                        else
-                        {
-                            return BadRequest("Soft-delete failed");
-                        }
+                        return BadRequest("Error");
                     }
                 }
-                
-
+                catch (HttpRequestException e)
+                {
+                    return Ok(e.Message);
+                }
             }
         }
-        [HttpPut("Revoke-permission"), Authorize(Roles ="Supervisor")]
-        public async Task<ActionResult<List<Employee1>>> Permission(int id)
+
+
+
+        [HttpPost("Add-Employees")]
+        public async Task<ActionResult> Add(Employee1 emp)
         {
             string url = configuration.GetSection("AppSettings").GetSection("url").Value;
-            using (var client = new HttpClient())
+            using (HttpClient httpClient = new HttpClient())
             {
-                client.BaseAddress = new Uri(url);
-                HttpResponseMessage res = await client.GetAsync("api/Employee");
-                string responseContent = res.Content.ReadAsStringAsync().Result;
-                List<Employee1> results = JsonConvert.DeserializeObject<List<Employee1>>(responseContent);
-                var newEmp = results.FirstOrDefault(x => x.Id == id);
-                if(newEmp==null)
+                try
                 {
-                    return NotFound("No employee of this id exists.");
-                }
-                else
-                {
-                    if (newEmp.isPermission == false)
+                    var t = Request.Cookies["JWTToken"];
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", t);
+                    string requestUri = $"{url}/api/Employee/Add-Employees";
+                    DateTime dateTime = DateTime.Now; // Replace with your DateTime value
+                    string formattedDate = dateTime.ToString("MMMM dd, yyyy HH:mm:ss tt");
+                    var newEmp = new {
+                        Name = emp.Name,
+                        Age = emp.Age,
+                        Salary = emp.Salary,
+                        Department = emp.Department,
+                        LastModified = formattedDate,
+                        isActive = true,
+                        isPermission = true,
+                        isDeleted = false
+                    };
+                    string jsonContent = Newtonsoft.Json.JsonConvert.SerializeObject(newEmp);
+                    var response = await httpClient.PostAsync(requestUri, new StringContent(jsonContent, System.Text.Encoding.UTF8, "application/json"));
+                    if (response.IsSuccessStatusCode)
                     {
-                        return Ok("Permission already revoked.");
+                        string responseContent = response.Content.ReadAsStringAsync().Result;
+                        return Ok(responseContent);
                     }
                     else
                     {
-                        var postData = new
-                        {
-                            Id = newEmp.Id,
-                            Name = newEmp.Name,
-                            Age = newEmp.Age,
-                            Role = newEmp.Role,
-                            isDeleted = newEmp.isDeleted,
-                            isActive = newEmp.isActive,
-                            isPermission = false
-
-                        };
-                        var content = new StringContent(JsonConvert.SerializeObject(postData), Encoding.UTF8, "application/json");
-                        HttpResponseMessage response = await client.PutAsync($"api/Employee/update", content);
-                        if (response.IsSuccessStatusCode)
-                        {
-                            return Ok("Permission Revoked at: " + DateTime.Now);
-                        }
-                        else
-                        {
-                            return BadRequest("Permission Revoke failed");
-                        }
+                        return BadRequest("Error");
                     }
-                }
-                
 
+
+                }
+                catch (HttpRequestException e)
+                {
+                    return Ok(e.Message);
+                }
             }
         }
-        [HttpPut("Grant-permission"), Authorize(Roles = "Supervisor")]
-
-        public async Task<ActionResult> GrantPermission(int id)
+        [HttpPost("Add-EmpRoles")]
+        public async Task<ActionResult> AddEmpRoles(string name, UserRoles roles)
         {
             string url = configuration.GetSection("AppSettings").GetSection("url").Value;
-            using (var client = new HttpClient())
+            using (HttpClient httpClient = new HttpClient())
             {
-                client.BaseAddress = new Uri(url);
-                HttpResponseMessage res = await client.GetAsync("api/Employee");
-                string responseContent = res.Content.ReadAsStringAsync().Result;
-                List<Employee1> results = JsonConvert.DeserializeObject<List<Employee1>>(responseContent);
-                var newEmp = results.FirstOrDefault(x => x.Id == id);
-                if(newEmp==null)
+                try
                 {
-                    return NotFound("No employee of this id exists.");
-                }
-                else
-                {
-                    if (newEmp.isPermission == true)
+                    var t = Request.Cookies["JWTToken"];
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", t);
+                    string requestUri = $"{url}/api/EmpRole/Add-EmpRole?name={name}&role={roles}";
+                    var response = await httpClient.PostAsync(requestUri,null);
+                    if(response.IsSuccessStatusCode)
                     {
-                        return Ok("Permission already granted.");
+                        string responseContent = response.Content.ReadAsStringAsync().Result;
+                        return Ok(responseContent);
                     }
                     else
                     {
-                        var postData = new
-                        {
-                            Id = newEmp.Id,
-                            Name = newEmp.Name,
-                            Age = newEmp.Age,
-                            Role = newEmp.Role,
-                            isDeleted = newEmp.isDeleted,
-                            isActive = newEmp.isActive,
-                            isPermission = true
-
-                        };
-                        var content = new StringContent(JsonConvert.SerializeObject(postData), Encoding.UTF8, "application/json");
-                        HttpResponseMessage response = await client.PutAsync($"api/Employee/update", content);
-                        if (response.IsSuccessStatusCode)
-                        {
-                            return Ok("Permission Granted at :" + DateTime.Now);
-                        }
-                        else
-                        {
-                            return BadRequest("Permission Grant failed");
-                        }
+                        return BadRequest();
                     }
                 }
-                
-
+                catch (HttpRequestException e) 
+                {
+                    return BadRequest(e.Message);
+                }
+                }
+        }
+        [HttpDelete("Delete-EmpRoles")]
+        public async Task<ActionResult> DeleteEmpRoles(string name, UserRoles roles)
+        {
+            string url = configuration.GetSection("AppSettings").GetSection("url").Value;
+            using (HttpClient httpClient = new HttpClient())
+            {
+                try
+                {
+                    httpClient.BaseAddress = new Uri(url);
+                    var t = Request.Cookies["JWTToken"];
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", t);
+                    HttpResponseMessage response = await httpClient.DeleteAsync($"api/EmpRole/Delete-EmpRole?name={name}&role={roles}");
+                    if(response.IsSuccessStatusCode)
+                    {
+                        string responseContent = response.Content.ReadAsStringAsync().Result;
+                        return Ok(responseContent);
+                    }
+                    else
+                    {
+                        return BadRequest("Could not delete.");
+                    }
+                }
+                catch(HttpRequestException e)
+                {
+                    return BadRequest(e.Message);
+                }
             }
         }
 
 
-        [HttpDelete("Delete"), Authorize(Roles = "Supervisor")]
+
+
+        [HttpDelete("Delete-Employee")]
         public async Task<ActionResult> Delete(int id)
         {
-
             string url = configuration.GetSection("AppSettings").GetSection("url").Value;
-            using (var client = new HttpClient())
+            using (HttpClient httpClient = new HttpClient())
             {
-                client.BaseAddress = new Uri(url);
-                HttpResponseMessage res = await client.GetAsync("api/Employee");
-                string responseContent = res.Content.ReadAsStringAsync().Result;
-                List<Employee1> results = JsonConvert.DeserializeObject<List<Employee1>>(responseContent);
-                var newEmp = results.FirstOrDefault(x => x.Id == id);
-                if(newEmp==null)
+                try
                 {
-                    return NotFound("No employee of this id exists.");
-                }
-                else
-                {
-                    if (newEmp.isPermission == false)
+                    httpClient.BaseAddress = new Uri(url);
+                    var t = Request.Cookies["JWTToken"];
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", t);
+                    HttpResponseMessage response = await httpClient.DeleteAsync($"api/Employee/Delete?id={id}");
+                    if(response.IsSuccessStatusCode)
                     {
-                        return BadRequest("No operation allowed.");
+                        string result = await response.Content.ReadAsStringAsync();
+                        return Ok(result);
                     }
                     else
                     {
-                        using (HttpResponseMessage response = await client.DeleteAsync("api/Employee/delete?id=" + id))
-                        {
-                            var rc = response.Content.ReadAsStringAsync().Result;
-
-                            //response.EnsureSuccessStatusCode();
-                            if (response.IsSuccessStatusCode)
-                            {
-                                Log.Information("Deleted results of Id => {@id}", id);
-                                return Ok("Deleted at: " + DateTime.Now);
-
-                            }
-                            else
-                            {
-                                return BadRequest("Delete failed.");
-                            }
-
-                        }
+                        return BadRequest();
                     }
                 }
-               
+                catch (HttpRequestException e)
+                {
+                    return Ok(e.Message);
+                }
             }
         }
-        [HttpPost]
-        private string CreateToken(User user)
+        [HttpPut("Update-Employee")]
+        public async Task<ActionResult> Update(Employee1 emp)
         {
-           
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
-                 configuration.GetSection("AppSettings:Token").Value!));
-
-            var roles = new[] { "Supervisor", "Manager", "Employee" };
-            var roleClaims = new[] { new Claim(ClaimTypes.Role, user.Role) };
-            var tokenDescriptor = new SecurityTokenDescriptor
+            string url = configuration.GetSection("AppSettings").GetSection("url").Value;
+            using (var httpClient = new HttpClient())
             {
-                Subject = new ClaimsIdentity(roleClaims),
-                Expires = DateTime.UtcNow.AddHours(1), // Token expiration time
-                SigningCredentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256Signature)
-            };
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var token = tokenHandler.CreateToken(tokenDescriptor);
+               
+                httpClient.BaseAddress = new Uri(url);
+                DateTime dateTime = DateTime.Now; 
+                string formattedDate = dateTime.ToString("MMMM dd, yyyy HH:mm:ss tt");
+                
+                var updatedEmployee = new Employee1
+                {
+                    Emp_Id = emp.Emp_Id, 
+                    Age = emp.Age, 
+                    Name = emp.Name,
+                    Salary=emp.Salary,
+                    Department= emp.Department,
+                    LastModified= formattedDate,
+                    
+                   
+                };
 
-            // Serialize the token to a string
-            var tokenString = tokenHandler.WriteToken(token);
-            return tokenString;
+                
+                var content = new StringContent(JsonConvert.SerializeObject(updatedEmployee), System.Text.Encoding.UTF8, "application/json");
 
+                var t = Request.Cookies["JWTToken"];
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", t);
+                HttpResponseMessage response = await httpClient.PutAsync("api/Employee/Update", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                   
+                    string result = await response.Content.ReadAsStringAsync();
+                    return Ok(result);
+                }
+                else
+                {
+                    
+                    string error = await response.Content.ReadAsStringAsync();
+                    return BadRequest(error);   
+                }
+            }
+        }
+           
         }
     }
-}

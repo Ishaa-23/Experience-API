@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "MvJ0x1zeyN3z6TAjiJnKzCigzAuGCa5/0WLhJ4lX+lnMXOBubrZMJjunvsAxgW717vVNkm3m86IizemrcChGGA==",
+  "dgSpecHash": "4/F8hQC90201cGC0du5RdkixgAz8XomLbQg2dj6XBxWHoix9Zv5gLXPXcoD3BzHhQNBRt+UyHF9rYDWHQYkxhw==",
   "success": true,
   "projectFilePath": "C:\\Users\\inabdi00\\source\\repos\\ExperienceAPI\\ExperienceAPI\\ExperienceAPI.csproj",
   "expectedPackageFiles": [
@@ -28,6 +28,7 @@
     "C:\\Users\\inabdi00\\.nuget\\packages\\microsoft.identitymodel.tokens\\7.0.2\\microsoft.identitymodel.tokens.7.0.2.nupkg.sha512",
     "C:\\Users\\inabdi00\\.nuget\\packages\\microsoft.openapi\\1.4.3\\microsoft.openapi.1.4.3.nupkg.sha512",
     "C:\\Users\\inabdi00\\.nuget\\packages\\newtonsoft.json\\13.0.3\\newtonsoft.json.13.0.3.nupkg.sha512",
+    "C:\\Users\\inabdi00\\.nuget\\packages\\restsharp\\110.2.0\\restsharp.110.2.0.nupkg.sha512",
     "C:\\Users\\inabdi00\\.nuget\\packages\\scrutor\\3.3.0\\scrutor.3.3.0.nupkg.sha512",
     "C:\\Users\\inabdi00\\.nuget\\packages\\serilog\\3.0.1\\serilog.3.0.1.nupkg.sha512",
     "C:\\Users\\inabdi00\\.nuget\\packages\\serilog.aspnetcore\\7.0.0\\serilog.aspnetcore.7.0.0.nupkg.sha512",
@@ -46,7 +47,7 @@
     "C:\\Users\\inabdi00\\.nuget\\packages\\swashbuckle.aspnetcore.swaggerui\\6.5.0\\swashbuckle.aspnetcore.swaggerui.6.5.0.nupkg.sha512",
     "C:\\Users\\inabdi00\\.nuget\\packages\\system.identitymodel.tokens.jwt\\7.0.2\\system.identitymodel.tokens.jwt.7.0.2.nupkg.sha512",
     "C:\\Users\\inabdi00\\.nuget\\packages\\system.text.encodings.web\\7.0.0\\system.text.encodings.web.7.0.0.nupkg.sha512",
-    "C:\\Users\\inabdi00\\.nuget\\packages\\system.text.json\\7.0.0\\system.text.json.7.0.0.nupkg.sha512"
+    "C:\\Users\\inabdi00\\.nuget\\packages\\system.text.json\\7.0.2\\system.text.json.7.0.2.nupkg.sha512"
   ],
   "logs": []
 }

@@ -55,3 +55,4 @@ C:\Users\inabdi00\source\repos\ExperienceAPI\ExperienceAPI\bin\Debug\net7.0\BCry
 C:\Users\inabdi00\source\repos\ExperienceAPI\ExperienceAPI\bin\Debug\net7.0\Scrutor.dll
 C:\Users\inabdi00\source\repos\ExperienceAPI\ExperienceAPI\bin\Debug\net7.0\Swashbuckle.AspNetCore.Filters.dll
 C:\Users\inabdi00\source\repos\ExperienceAPI\ExperienceAPI\bin\Debug\net7.0\Swashbuckle.AspNetCore.Filters.Abstractions.dll
+C:\Users\inabdi00\source\repos\ExperienceAPI\ExperienceAPI\bin\Debug\net7.0\RestSharp.dll

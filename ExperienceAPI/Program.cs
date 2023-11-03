@@ -8,6 +8,8 @@ using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Filters;
 using Microsoft.AspNetCore.Authorization;
 using static System.Net.WebRequestMethods;
+using Microsoft.OpenApi.Any;
+using static ExperienceAPI.Models.Roles;
 
 var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
@@ -24,6 +26,14 @@ builder.Services.AddSwaggerGen(options=>
        Type= SecuritySchemeType.ApiKey
     });
     options.OperationFilter<SecurityRequirementsOperationFilter>();
+    options.MapType<UserRoles>(() => new OpenApiSchema
+    {
+        Type = "string",
+        Enum = Enum.GetNames(typeof(UserRoles)).Select(name => new OpenApiString(name)).ToArray(),
+        Description = "User roles dropdown"
+
+
+    });
 }
 );
 builder.Services.AddAuthentication().AddJwtBearer(options =>
